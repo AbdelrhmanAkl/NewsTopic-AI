@@ -51,17 +51,20 @@ def preprocess_text(text: str) -> str:
     Apply the same preprocessing pipeline used during model training.
 
     Steps:
-    1. Convert text to lowercase.
-    2. Remove URLs.
-    3. Keep alphabetic characters only.
-    4. Tokenize.
-    5. Remove standard English stopwords.
-    6. Remove tokens with length <= 2.
-    7. Lemmatize tokens.
-    8. Remove domain-specific news stopwords.
+    1. Ensure required NLTK resources are available.
+    2. Convert text to lowercase.
+    3. Remove URLs.
+    4. Keep alphabetic characters only.
+    5. Tokenize.
+    6. Remove standard English stopwords.
+    7. Remove tokens with length <= 2.
+    8. Lemmatize tokens.
+    9. Remove domain-specific news stopwords.
     """
     if not isinstance(text, str):
         return ""
+
+    download_nltk_resources()
 
     text = text.lower()
 
