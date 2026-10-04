@@ -438,6 +438,12 @@ def set_example(text: str):
 # Helper Functions
 # ============================================================
 
+def get_label(labels, topic_id):
+    """Label lookup that works whether the JSON keys start at 0 or at 1."""
+    offset = min(int(key) for key in labels.keys())
+    return labels.get(str(topic_id + offset), f"Topic {topic_id + 1}")
+
+
 def predict_lda(cleaned_text):
     """Generate LDA topic distribution."""
 
@@ -452,7 +458,7 @@ def predict_lda(cleaned_text):
 
     return {
         "topic_id": int(topic_id),
-        "label": lda_labels[str(topic_id)],
+        "label": get_label(lda_labels, topic_id),
         "probability": float(probability),
         "distribution": distribution,
     }
@@ -467,7 +473,7 @@ def predict_nmf(cleaned_text):
 
     return {
         "topic_id": topic_id,
-        "label": nmf_labels[str(topic_id)],
+        "label": get_label(nmf_labels, topic_id),
         "weight": float(weights[topic_id]),
         "weights": weights,
     }
@@ -785,12 +791,12 @@ elif page == "LDA Topics":
         "Top words and their weights, taken directly from the trained model.",
     )
 
-    lda_ids = sorted(int(key) for key in lda_labels.keys())
+    lda_ids = list(range(lda_model.num_topics))
 
     selected = st.selectbox(
         "Choose a topic",
         lda_ids,
-        format_func=lambda i: f"Topic {i + 1:02d} · {lda_labels[str(i)]}",
+        format_func=lambda i: f"Topic {i + 1:02d} · {get_label(lda_labels, i)}",
     )
 
     show_chart(
@@ -820,12 +826,12 @@ elif page == "NMF Topics":
         "Top terms and their component weights, taken directly from the trained model.",
     )
 
-    nmf_ids = sorted(int(key) for key in nmf_labels.keys())
+    nmf_ids = list(range(nmf_model.components_.shape[0]))
 
     selected = st.selectbox(
         "Choose a topic",
         nmf_ids,
-        format_func=lambda i: f"Topic {i + 1:02d} · {nmf_labels[str(i)]}",
+        format_func=lambda i: f"Topic {i + 1:02d} · {get_label(nmf_labels, i)}",
     )
 
     show_chart(
@@ -1017,7 +1023,7 @@ elif page == "Analyze Article":
                 lda_distribution = pd.DataFrame(
                     [
                         {
-                            "Topic": lda_labels[str(topic_id)],
+                            "Topic": get_label(lda_labels, topic_id),
                             "Probability": probability,
                         }
                         for topic_id, probability in lda_result["distribution"]
@@ -1053,7 +1059,7 @@ elif page == "Analyze Article":
                 html('<div class="section-title">NMF topic weights</div>')
 
                 nmf_topic_names = [
-                    nmf_labels[str(i)] for i in range(len(nmf_result["weights"]))
+                    get_label(nmf_labels, i) for i in range(len(nmf_result["weights"]))
                 ]
 
                 nmf_distribution = pd.DataFrame(
