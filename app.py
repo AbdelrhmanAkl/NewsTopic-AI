@@ -1,5 +1,6 @@
 import json
 import pickle
+import re
 from pathlib import Path
 
 import joblib
@@ -27,309 +28,244 @@ TOTAL_ARTICLES = 2126
 LDA_TOPIC_COUNT = 6
 NMF_TOPIC_COUNT = 10
 
+ACCENT = "#6366f1"        # soft indigo
+ACCENT_LIGHT = "#a5b4fc"  # pastel indigo
+ACCENT_SOFT = "#eef0ff"   # very light indigo tint
+
+GITHUB_URL = "https://github.com/AbdelrhmanAkl/NewsTopic-AI"
+GITHUB_PROFILE = "https://github.com/AbdelrhmanAkl"
+
 
 st.set_page_config(
     page_title="NewsTopic AI",
-    page_icon="N",
+    page_icon="📰",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 
+def html(markup: str):
+    """Render HTML safely (strips indentation so Markdown never treats it as code)."""
+    st.markdown(
+        re.sub(r"^\s+", "", markup, flags=re.M),
+        unsafe_allow_html=True,
+    )
+
+
 # ============================================================
-# Premium Minimal UI
+# Light & Chic UI
 # ============================================================
 
-st.markdown(
-    """
+html(
+    f"""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
     /* ---------- Global ---------- */
+    html, body, [class*="css"], .stApp {{
+        font-family: 'Inter', -apple-system, 'Segoe UI', Arial, sans-serif;
+    }}
 
-    .stApp {
-        background: #ffffff;
-    }
+    .stApp {{
+        background: linear-gradient(180deg, #f7f8ff 0%, #ffffff 340px);
+    }}
 
-    .block-container {
-        max-width: 1280px;
-        padding-top: 2.2rem;
-        padding-bottom: 4rem;
-    }
-
-    section[data-testid="stSidebar"] {
-        background: #fafafa;
-        border-right: 1px solid #eeeeee;
-    }
-
-    section[data-testid="stSidebar"] > div {
+    .block-container {{
+        max-width: 1200px;
         padding-top: 2rem;
-    }
+        padding-bottom: 4rem;
+    }}
 
-    /* ---------- Typography ---------- */
-
-    h1, h2, h3 {
-        color: #171717 !important;
-        letter-spacing: -0.025em;
-    }
-
-    p, li, span, label {
-        color: #4b4b4b;
-    }
-
-    .muted {
-        color: #737373;
-        font-size: 0.92rem;
-        line-height: 1.6;
-    }
-
-    /* ---------- Header ---------- */
-
-    .hero {
-        padding: 0.5rem 0 2rem 0;
-    }
-
-    .hero-label {
-        display: inline-block;
-        padding: 0.35rem 0.7rem;
-        border: 1px solid #e5e5e5;
-        border-radius: 999px;
-        background: #fafafa;
-        color: #525252;
-        font-size: 0.78rem;
-        font-weight: 600;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        margin-bottom: 1rem;
-    }
-
-    .hero-title {
-        font-size: 3rem;
-        font-weight: 750;
-        line-height: 1.05;
-        color: #171717;
-        margin-bottom: 0.7rem;
-    }
-
-    .hero-subtitle {
-        max-width: 760px;
-        color: #737373;
-        font-size: 1.05rem;
-        line-height: 1.7;
-    }
-
-    /* ---------- Cards ---------- */
-
-    .stat-card {
-        border: 1px solid #e8e8e8;
-        border-radius: 14px;
-        padding: 1.15rem 1.25rem;
-        background: #ffffff;
-        min-height: 105px;
-    }
-
-    .stat-label {
-        color: #737373;
-        font-size: 0.82rem;
-        margin-bottom: 0.45rem;
-    }
-
-    .stat-value {
-        color: #171717;
-        font-size: 1.7rem;
-        font-weight: 700;
-        line-height: 1.1;
-    }
-
-    .stat-description {
-        color: #8a8a8a;
-        font-size: 0.76rem;
-        margin-top: 0.4rem;
-    }
-
-    .topic-card {
-        border: 1px solid #e8e8e8;
-        border-radius: 14px;
-        padding: 1.15rem 1.2rem;
-        background: #ffffff;
-        min-height: 150px;
-        transition: border-color 0.15s ease;
-    }
-
-    .topic-card:hover {
-        border-color: #cfcfcf;
-    }
-
-    .topic-number {
-        color: #999999;
-        font-size: 0.75rem;
-        font-weight: 600;
-        margin-bottom: 0.4rem;
-    }
-
-    .topic-title {
-        color: #202020;
-        font-size: 1.02rem;
-        font-weight: 650;
-        margin-bottom: 0.7rem;
-    }
-
-    .topic-words {
-        color: #737373;
-        font-size: 0.82rem;
-        line-height: 1.7;
-    }
-
-    .info-card {
-        border: 1px solid #e8e8e8;
-        border-radius: 14px;
-        padding: 1.4rem;
-        background: #ffffff;
-        height: 100%;
-    }
-
-    .info-title {
-        color: #202020;
-        font-size: 1rem;
-        font-weight: 650;
-        margin-bottom: 0.55rem;
-    }
-
-    .info-text {
-        color: #737373;
-        font-size: 0.9rem;
-        line-height: 1.7;
-    }
-
-    /* ---------- Section ---------- */
-
-    .section-label {
-        color: #8a8a8a;
-        font-size: 0.75rem;
-        font-weight: 650;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        margin-bottom: 0.3rem;
-    }
-
-    .section-title {
-        color: #171717;
-        font-size: 1.55rem;
-        font-weight: 700;
-        margin-bottom: 0.35rem;
-    }
-
-    .section-description {
-        color: #737373;
-        font-size: 0.9rem;
-        margin-bottom: 1.25rem;
-    }
-
-    /* ---------- Divider ---------- */
-
-    .soft-divider {
-        height: 1px;
-        background: #eeeeee;
-        margin: 2rem 0;
-    }
+    /* Hide Streamlit chrome (keeps sidebar toggle working) */
+    #MainMenu, footer {{ visibility: hidden; }}
+    [data-testid="stToolbar"], [data-testid="stDecoration"],
+    [data-testid="stStatusWidget"], .stAppDeployButton {{ display: none !important; }}
+    header[data-testid="stHeader"] {{ background: transparent; }}
 
     /* ---------- Sidebar ---------- */
+    section[data-testid="stSidebar"] {{
+        background: #f4f6ff;
+        border-right: 1px solid #e6e9fb;
+    }}
+    section[data-testid="stSidebar"] > div {{ padding-top: 1.6rem; }}
 
-    .sidebar-brand {
-        color: #171717;
+    .sidebar-brand {{
+        color: #1e1b4b;
         font-size: 1.35rem;
-        font-weight: 750;
+        font-weight: 800;
         letter-spacing: -0.02em;
-    }
-
-    .sidebar-description {
-        color: #858585;
+    }}
+    .sidebar-brand span {{ color: {ACCENT}; }}
+    .sidebar-description {{
+        color: #6b7280;
         font-size: 0.82rem;
         line-height: 1.6;
         margin-top: 0.35rem;
-    }
-
-    .sidebar-section {
-        color: #999999;
-        font-size: 0.72rem;
-        font-weight: 650;
-        letter-spacing: 0.08em;
+    }}
+    .sidebar-section {{
+        color: #9aa0c3;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
         text-transform: uppercase;
         margin-top: 1.6rem;
-        margin-bottom: 0.65rem;
-    }
-
-    .sidebar-meta {
+        margin-bottom: 0.6rem;
+    }}
+    .sidebar-meta {{
         display: flex;
         justify-content: space-between;
-        padding: 0.35rem 0;
-        border-bottom: 1px solid #eeeeee;
-        font-size: 0.8rem;
-    }
-
-    .sidebar-meta:last-child {
-        border-bottom: none;
-    }
-
-    .sidebar-meta-label {
-        color: #858585;
-    }
-
-    .sidebar-meta-value {
-        color: #333333;
+        padding: 0.4rem 0;
+        border-bottom: 1px solid #e6e9fb;
+        font-size: 0.82rem;
+    }}
+    .sidebar-meta-label {{ color: #6b7280; }}
+    .sidebar-meta-value {{ color: #1e1b4b; font-weight: 700; }}
+    .sidebar-link {{
+        display: block;
+        color: {ACCENT} !important;
+        font-size: 0.82rem;
         font-weight: 600;
-    }
+        text-decoration: none;
+        padding: 0.25rem 0;
+    }}
+    .sidebar-link:hover {{ text-decoration: underline; }}
+
+    /* ---------- Typography ---------- */
+    h1, h2, h3, h4 {{ color: #1e1b4b !important; letter-spacing: -0.02em; }}
+    p, li, label {{ color: #475569; }}
+    .muted {{ color: #6b7280; font-size: 0.9rem; line-height: 1.65; }}
+
+    /* ---------- Hero ---------- */
+    .hero {{ padding: 0.5rem 0 1.6rem 0; }}
+    .hero-label {{
+        display: inline-block;
+        padding: 0.35rem 0.8rem;
+        border-radius: 999px;
+        background: {ACCENT_SOFT};
+        color: {ACCENT};
+        font-size: 0.74rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+    }}
+    .hero-title {{
+        font-size: 3.1rem;
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: -0.03em;
+        color: #1e1b4b;
+        margin-bottom: 0.7rem;
+    }}
+    .hero-title span {{
+        background: linear-gradient(90deg, {ACCENT}, #8b5cf6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }}
+    .hero-subtitle {{
+        max-width: 760px;
+        color: #6b7280;
+        font-size: 1.05rem;
+        line-height: 1.7;
+    }}
+
+    /* ---------- Cards ---------- */
+    .stat-card, .topic-card, .info-card, .result-card, .step-card {{
+        border: 1px solid #e6e9fb;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 1px 2px rgba(99, 102, 241, 0.04), 0 4px 14px rgba(99, 102, 241, 0.05);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    }}
+    .stat-card:hover, .topic-card:hover, .info-card:hover {{
+        border-color: {ACCENT_LIGHT};
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.12);
+        transform: translateY(-2px);
+    }}
+
+    .stat-card {{ padding: 1.15rem 1.25rem; min-height: 112px; }}
+    .stat-label {{ color: #6b7280; font-size: 0.8rem; margin-bottom: 0.4rem; }}
+    .stat-value {{ color: {ACCENT}; font-size: 1.85rem; font-weight: 800; line-height: 1.1; }}
+    .stat-description {{ color: #9ca3af; font-size: 0.75rem; margin-top: 0.4rem; }}
+
+    .topic-card {{ padding: 1.15rem 1.25rem; min-height: 150px; margin-bottom: 1rem; }}
+    .topic-number {{ color: {ACCENT}; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; margin-bottom: 0.4rem; }}
+    .topic-title {{ color: #1e1b4b; font-size: 1.02rem; font-weight: 700; margin-bottom: 0.7rem; }}
+    .topic-words {{ color: #6b7280; font-size: 0.82rem; line-height: 1.8; }}
+
+    .info-card {{ padding: 1.4rem; min-height: 175px; }}
+    .info-title {{ color: #1e1b4b; font-size: 1rem; font-weight: 700; margin-bottom: 0.55rem; }}
+    .info-text {{ color: #6b7280; font-size: 0.9rem; line-height: 1.7; }}
+
+    /* ---------- Pipeline ---------- */
+    .step-card {{ padding: 1rem 1rem; text-align: center; min-height: 112px; }}
+    .step-num {{
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 26px; height: 26px; border-radius: 50%;
+        background: {ACCENT_SOFT}; color: {ACCENT};
+        font-size: 0.78rem; font-weight: 800; margin-bottom: 0.5rem;
+    }}
+    .step-title {{ color: #1e1b4b; font-size: 0.9rem; font-weight: 700; }}
+    .step-text {{ color: #9ca3af; font-size: 0.76rem; margin-top: 0.25rem; line-height: 1.5; }}
+
+    /* ---------- Results ---------- */
+    .result-card {{ padding: 1.3rem 1.4rem; min-height: 190px; }}
+    .result-model {{ color: #9aa0c3; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }}
+    .result-badge {{
+        display: inline-block; margin: 0.7rem 0 0.9rem 0;
+        padding: 0.45rem 0.95rem; border-radius: 999px;
+        background: {ACCENT_SOFT}; color: {ACCENT};
+        font-size: 1rem; font-weight: 700;
+    }}
+    .result-metric-label {{ color: #6b7280; font-size: 0.78rem; }}
+    .result-metric-value {{ color: #1e1b4b; font-size: 1.5rem; font-weight: 800; }}
+
+    /* ---------- Sections ---------- */
+    .section-label {{
+        color: {ACCENT}; font-size: 0.74rem; font-weight: 700;
+        letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem;
+    }}
+    .section-title {{ color: #1e1b4b; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.35rem; }}
+    .section-description {{ color: #6b7280; font-size: 0.92rem; margin-bottom: 1.25rem; }}
+    .soft-divider {{ height: 1px; background: #e6e9fb; margin: 2.2rem 0; }}
 
     /* ---------- Inputs ---------- */
-
-    div[data-testid="stTextArea"] textarea {
-        border-radius: 12px;
-        border: 1px solid #dddddd;
-        background: #ffffff;
-    }
-
-    div[data-testid="stTextArea"] textarea:focus {
-        border-color: #a3a3a3;
-        box-shadow: none;
-    }
+    div[data-testid="stTextArea"] textarea {{
+        border-radius: 14px; border: 1px solid #dfe3f8; background: #ffffff;
+    }}
+    div[data-testid="stTextArea"] textarea:focus {{
+        border-color: {ACCENT}; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    }}
+    div[data-baseweb="select"] > div {{ border-radius: 12px; border-color: #dfe3f8; }}
 
     /* ---------- Buttons ---------- */
-
-    .stButton > button {
-        border-radius: 10px;
-        min-height: 42px;
-        font-weight: 600;
-        border: 1px solid #d9d9d9;
-    }
+    .stButton > button {{
+        border-radius: 12px; min-height: 42px; font-weight: 600;
+        border: 1px solid #dfe3f8; background: #ffffff; color: #3730a3;
+        transition: all 0.15s ease;
+    }}
+    .stButton > button:hover {{
+        border-color: {ACCENT}; color: {ACCENT}; background: {ACCENT_SOFT};
+    }}
+    .stButton > button[kind="primary"] {{
+        background: linear-gradient(90deg, {ACCENT}, #8b5cf6);
+        color: #ffffff; border: none;
+    }}
+    .stButton > button[kind="primary"]:hover {{
+        color: #ffffff; filter: brightness(1.06);
+        box-shadow: 0 6px 18px rgba(99, 102, 241, 0.3);
+    }}
 
     /* ---------- Metrics ---------- */
-
-    div[data-testid="stMetric"] {
-        background: #ffffff;
-        border: 1px solid #e8e8e8;
-        border-radius: 14px;
-        padding: 1rem 1.15rem;
-    }
-
-    div[data-testid="stMetricLabel"] {
-        color: #737373;
-    }
-
-    div[data-testid="stMetricValue"] {
-        color: #171717;
-    }
+    div[data-testid="stMetric"] {{
+        background: #ffffff; border: 1px solid #e6e9fb;
+        border-radius: 16px; padding: 1rem 1.15rem;
+    }}
 
     /* ---------- Footer ---------- */
-
-    .footer {
-        text-align: center;
-        color: #a0a0a0;
-        font-size: 0.78rem;
-        padding-top: 2.5rem;
-    }
-
+    .footer {{ text-align: center; color: #a5a9c4; font-size: 0.78rem; padding-top: 2.5rem; }}
     </style>
-    """,
-    unsafe_allow_html=True,
+    """
 )
 
 
@@ -341,36 +277,17 @@ st.markdown(
 def load_models():
     """Load trained models and metadata once."""
 
-    lda_model = LdaModel.load(
-        str(MODELS_DIR / "final_lda_model")
-    )
+    lda_model = LdaModel.load(str(MODELS_DIR / "final_lda_model"))
+    nmf_model = joblib.load(MODELS_DIR / "final_nmf_model.joblib")
+    tfidf_vectorizer = joblib.load(MODELS_DIR / "refined_tfidf_vectorizer.joblib")
 
-    nmf_model = joblib.load(
-        MODELS_DIR / "final_nmf_model.joblib"
-    )
-
-    tfidf_vectorizer = joblib.load(
-        MODELS_DIR / "refined_tfidf_vectorizer.joblib"
-    )
-
-    with open(
-        MODELS_DIR / "refined_dictionary.pkl",
-        "rb",
-    ) as file:
+    with open(MODELS_DIR / "refined_dictionary.pkl", "rb") as file:
         dictionary = pickle.load(file)
 
-    with open(
-        MODELS_DIR / "lda_topic_labels.json",
-        "r",
-        encoding="utf-8",
-    ) as file:
+    with open(MODELS_DIR / "lda_topic_labels.json", "r", encoding="utf-8") as file:
         lda_labels = json.load(file)
 
-    with open(
-        MODELS_DIR / "nmf_topic_labels.json",
-        "r",
-        encoding="utf-8",
-    ) as file:
+    with open(MODELS_DIR / "nmf_topic_labels.json", "r", encoding="utf-8") as file:
         nmf_labels = json.load(file)
 
     return (
@@ -474,6 +391,49 @@ NMF_TOPIC_WORDS = {
 }
 
 
+EXAMPLE_ARTICLES = {
+    "Sports": (
+        "Chelsea moved clear at the top of the league after a convincing win over "
+        "Arsenal at Stamford Bridge. The manager praised his players for their "
+        "performance, saying the team had shown great character throughout the "
+        "season. Liverpool and Manchester United both dropped points, leaving the "
+        "champions with a comfortable lead ahead of the final matches of the season."
+    ),
+    "Business": (
+        "Shares in the company rose sharply after the firm reported a rise in annual "
+        "profit and higher sales across its main markets. Analysts said the results "
+        "were better than expected, and the bank raised its forecast for growth in "
+        "the coming year. The board announced a higher dividend for shareholders "
+        "despite rising oil prices and a weaker euro."
+    ),
+    "Technology": (
+        "A new mobile phone with built-in broadband access has been unveiled at a "
+        "technology show. The device lets users download music and video over the "
+        "network at much faster speeds. Software makers said digital services and "
+        "online gaming would drive demand as more people connect to the internet "
+        "from their handsets."
+    ),
+    "Politics": (
+        "Labour has launched its election campaign with a pledge on tax and public "
+        "services. The prime minister said the government would continue its plans "
+        "on policing and health, while the Tory leader attacked the party over "
+        "immigration. Party strategists expect the campaign to focus on the economy "
+        "in the coming weeks."
+    ),
+    "Entertainment": (
+        "The film won the top prize at the awards ceremony, with its director and "
+        "lead actor both collecting trophies. The soundtrack album, which features "
+        "a well-known rock band, has also climbed the music chart. Critics called "
+        "it the best film of the year, and the festival audience gave it a standing "
+        "ovation."
+    ),
+}
+
+
+def set_example(text: str):
+    st.session_state["article_text"] = text
+
+
 # ============================================================
 # Helper Functions
 # ============================================================
@@ -488,10 +448,7 @@ def predict_lda(cleaned_text):
         minimum_probability=0,
     )
 
-    topic_id, probability = max(
-        distribution,
-        key=lambda item: item[1],
-    )
+    topic_id, probability = max(distribution, key=lambda item: item[1])
 
     return {
         "topic_id": int(topic_id),
@@ -504,14 +461,8 @@ def predict_lda(cleaned_text):
 def predict_nmf(cleaned_text):
     """Generate NMF topic weights."""
 
-    tfidf_matrix = tfidf_vectorizer.transform(
-        [cleaned_text]
-    )
-
-    weights = nmf_model.transform(
-        tfidf_matrix
-    )[0]
-
+    tfidf_matrix = tfidf_vectorizer.transform([cleaned_text])
+    weights = nmf_model.transform(tfidf_matrix)[0]
     topic_id = int(weights.argmax())
 
     return {
@@ -522,41 +473,88 @@ def predict_nmf(cleaned_text):
     }
 
 
+def lda_top_words(topic_id, topn=10):
+    """Real word weights from the trained LDA model."""
+    rows = lda_model.show_topic(topic_id, topn=topn)
+    return pd.DataFrame(rows, columns=["Word", "Weight"])
+
+
+def nmf_top_words(topic_id, topn=10):
+    """Real word weights from the trained NMF model."""
+    feature_names = tfidf_vectorizer.get_feature_names_out()
+    components = nmf_model.components_[topic_id]
+    top_idx = components.argsort()[::-1][:topn]
+    return pd.DataFrame(
+        {
+            "Word": [feature_names[i] for i in top_idx],
+            "Weight": [float(components[i]) for i in top_idx],
+        }
+    )
+
+
 def chart_layout(fig, height=380):
-    """Apply a clean portfolio-friendly Plotly layout."""
+    """Apply a clean, light Plotly layout."""
 
     fig.update_layout(
         height=height,
         template="simple_white",
-        paper_bgcolor="white",
-        plot_bgcolor="white",
-        font=dict(
-            family="Arial",
-            color="#444444",
-        ),
-        margin=dict(
-            l=20,
-            r=20,
-            t=55,
-            b=20,
-        ),
-        title=dict(
-            font=dict(
-                size=17,
-                color="#202020",
-            ),
-        ),
-        xaxis=dict(
-            gridcolor="#eeeeee",
-            zerolinecolor="#eeeeee",
-        ),
-        yaxis=dict(
-            gridcolor="#eeeeee",
-            zerolinecolor="#eeeeee",
-        ),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(family="Inter, Arial", color="#475569"),
+        margin=dict(l=20, r=30, t=30, b=20),
+        xaxis=dict(gridcolor="#eef0fb", zerolinecolor="#eef0fb"),
+        yaxis=dict(gridcolor="#eef0fb", zerolinecolor="#eef0fb"),
+    )
+    return fig
+
+
+def show_chart(fig):
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config={"displayModeBar": False},
     )
 
-    return fig
+
+def section_header(label, title, description=None):
+    html(f'<div class="section-label">{label}</div>')
+    html(f'<div class="section-title">{title}</div>')
+    if description:
+        html(f'<div class="section-description">{description}</div>')
+
+
+def divider():
+    html('<div class="soft-divider"></div>')
+
+
+def topic_cards(topic_words):
+    columns = st.columns(2)
+    for index, (topic_label, words) in enumerate(topic_words.items(), start=1):
+        with columns[(index - 1) % 2]:
+            word_list = " · ".join(words)
+            html(
+                f"""
+                <div class="topic-card">
+                    <div class="topic-number">TOPIC {index:02d}</div>
+                    <div class="topic-title">{topic_label}</div>
+                    <div class="topic-words">{word_list}</div>
+                </div>
+                """
+            )
+
+
+def word_weight_chart(df, title):
+    df = df.sort_values("Weight", ascending=True)
+    fig = px.bar(
+        df,
+        x="Weight",
+        y="Word",
+        orientation="h",
+        color_discrete_sequence=[ACCENT],
+    )
+    fig.update_traces(marker_line_width=0, opacity=0.9)
+    fig.update_layout(xaxis_title=title, yaxis_title="", showlegend=False)
+    return chart_layout(fig, height=400)
 
 
 # ============================================================
@@ -565,25 +563,18 @@ def chart_layout(fig, height=380):
 
 with st.sidebar:
 
-    st.markdown(
-        '<div class="sidebar-brand">NewsTopic AI</div>',
-        unsafe_allow_html=True,
-    )
+    html('<div class="sidebar-brand">News<span>Topic</span> AI</div>')
 
-    st.markdown(
+    html(
         """
         <div class="sidebar-description">
         Unsupervised topic modeling for discovering
         hidden themes in news articles.
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
-    st.markdown(
-        '<div class="sidebar-section">Navigation</div>',
-        unsafe_allow_html=True,
-    )
+    html('<div class="sidebar-section">Navigation</div>')
 
     page = st.radio(
         "Navigation",
@@ -597,12 +588,9 @@ with st.sidebar:
         label_visibility="collapsed",
     )
 
-    st.markdown(
-        '<div class="sidebar-section">Dataset</div>',
-        unsafe_allow_html=True,
-    )
+    html('<div class="sidebar-section">Dataset</div>')
 
-    st.markdown(
+    html(
         f"""
         <div class="sidebar-meta">
             <span class="sidebar-meta-label">Articles</span>
@@ -616,42 +604,20 @@ with st.sidebar:
             <span class="sidebar-meta-label">NMF topics</span>
             <span class="sidebar-meta-value">{NMF_TOPIC_COUNT}</span>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
-    st.markdown(
-        '<div class="sidebar-section">Methods</div>',
-        unsafe_allow_html=True,
-    )
-
+    html('<div class="sidebar-section">Methods</div>')
     st.caption("LDA · Probabilistic Topic Modeling")
     st.caption("NMF · TF-IDF Matrix Factorization")
 
-
-# ============================================================
-# Hero Header
-# ============================================================
-
-st.markdown(
-    """
-    <div class="hero">
-        <div class="hero-label">
-            NLP · Topic Modeling
-        </div>
-        <div class="hero-title">
-            NewsTopic AI
-        </div>
-        <div class="hero-subtitle">
-            Discover hidden themes in news articles using
-            two complementary unsupervised learning approaches:
-            Latent Dirichlet Allocation and Non-negative Matrix
-            Factorization.
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+    html('<div class="sidebar-section">Links</div>')
+    html(
+        f"""
+        <a class="sidebar-link" href="{GITHUB_URL}" target="_blank">↗ Project on GitHub</a>
+        <a class="sidebar-link" href="{GITHUB_PROFILE}" target="_blank">↗ Author profile</a>
+        """
+    )
 
 
 # ============================================================
@@ -660,108 +626,91 @@ st.markdown(
 
 if page == "Overview":
 
-    st.markdown(
-        '<div class="section-label">Overview</div>',
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
-        '<div class="section-title">Project at a glance</div>',
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
+    # Hero (Overview only)
+    html(
         """
-        <div class="section-description">
-        A compact NLP system for automatically discovering
-        recurring semantic structures in a collection of news articles.
+        <div class="hero">
+            <div class="hero-label">NLP · Topic Modeling</div>
+            <div class="hero-title">News<span>Topic</span> AI</div>
+            <div class="hero-subtitle">
+                Discover hidden themes in news articles using
+                two complementary unsupervised learning approaches:
+                Latent Dirichlet Allocation and Non-negative Matrix
+                Factorization.
+            </div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
-    # --------------------------------------------------------
-    # Statistics
-    # --------------------------------------------------------
-
-    col1, col2, col3, col4 = st.columns(4)
-
-    with col1:
-        st.markdown(
-            f"""
-            <div class="stat-card">
-                <div class="stat-label">Articles analyzed</div>
-                <div class="stat-value">{TOTAL_ARTICLES:,}</div>
-                <div class="stat-description">News documents</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with col2:
-        st.markdown(
-            f"""
-            <div class="stat-card">
-                <div class="stat-label">LDA topics</div>
-                <div class="stat-value">{LDA_TOPIC_COUNT}</div>
-                <div class="stat-description">Compact topic structure</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with col3:
-        st.markdown(
-            f"""
-            <div class="stat-card">
-                <div class="stat-label">NMF topics</div>
-                <div class="stat-value">{NMF_TOPIC_COUNT}</div>
-                <div class="stat-description">Fine-grained structure</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with col4:
-        st.markdown(
-            f"""
-            <div class="stat-card">
-                <div class="stat-label">LDA coherence</div>
-                <div class="stat-value">{LDA_COHERENCE:.4f}</div>
-                <div class="stat-description">Topic quality metric</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    st.markdown(
-        '<div class="soft-divider"></div>',
-        unsafe_allow_html=True,
+    section_header(
+        "Overview",
+        "Project at a glance",
+        "A compact NLP system for automatically discovering recurring "
+        "semantic structures in a collection of news articles.",
     )
 
-    # --------------------------------------------------------
-    # Project Explanation
-    # --------------------------------------------------------
+    stats = [
+        ("Articles analyzed", f"{TOTAL_ARTICLES:,}", "News documents"),
+        ("LDA topics", f"{LDA_TOPIC_COUNT}", "Compact topic structure"),
+        ("NMF topics", f"{NMF_TOPIC_COUNT}", "Fine-grained structure"),
+        ("LDA coherence", f"{LDA_COHERENCE:.4f}", "Topic quality metric"),
+    ]
 
-    st.markdown(
-        '<div class="section-label">Approach</div>',
-        unsafe_allow_html=True,
+    for col, (label, value, desc) in zip(st.columns(4), stats):
+        with col:
+            html(
+                f"""
+                <div class="stat-card">
+                    <div class="stat-label">{label}</div>
+                    <div class="stat-value">{value}</div>
+                    <div class="stat-description">{desc}</div>
+                </div>
+                """
+            )
+
+    divider()
+
+    # Pipeline
+    section_header(
+        "Pipeline",
+        "From raw text to topics",
+        "Every article goes through the same five steps.",
     )
 
-    st.markdown(
-        '<div class="section-title">How it works</div>',
-        unsafe_allow_html=True,
-    )
+    steps = [
+        ("Raw text", "News article input"),
+        ("Preprocessing", "Cleaning, tokenizing, lemmatizing"),
+        ("Vectorization", "Bag-of-words and TF-IDF"),
+        ("Modeling", "LDA and NMF"),
+        ("Topics", "Dominant theme and weights"),
+    ]
+
+    for col, (index, (title, text)) in zip(
+        st.columns(5), enumerate(steps, start=1)
+    ):
+        with col:
+            html(
+                f"""
+                <div class="step-card">
+                    <div class="step-num">{index}</div>
+                    <div class="step-title">{title}</div>
+                    <div class="step-text">{text}</div>
+                </div>
+                """
+            )
+
+    divider()
+
+    # How it works
+    section_header("Approach", "How it works")
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown(
+        html(
             """
             <div class="info-card">
-                <div class="info-title">
-                    LDA · Probabilistic Modeling
-                </div>
+                <div class="info-title">LDA · Probabilistic Modeling</div>
                 <div class="info-text">
                     LDA represents each document as a mixture of
                     latent topics and each topic as a distribution
@@ -769,17 +718,14 @@ if page == "Overview":
                     six-topic representation of the dataset.
                 </div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
     with col2:
-        st.markdown(
+        html(
             """
             <div class="info-card">
-                <div class="info-title">
-                    NMF · Matrix Factorization
-                </div>
+                <div class="info-title">NMF · Matrix Factorization</div>
                 <div class="info-text">
                     NMF decomposes the TF-IDF document-term matrix
                     into interpretable topic components. Its
@@ -788,59 +734,31 @@ if page == "Overview":
                     entertainment and business.
                 </div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
-    st.markdown(
-        '<div class="soft-divider"></div>',
-        unsafe_allow_html=True,
-    )
+    divider()
 
-    # --------------------------------------------------------
-    # Model Summary
-    # --------------------------------------------------------
+    # Model summary
+    section_header("Evaluation", "Model summary")
 
-    st.markdown(
-        '<div class="section-label">Evaluation</div>',
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
-        '<div class="section-title">Model summary</div>',
-        unsafe_allow_html=True,
-    )
-
-    comparison_df = pd.DataFrame(
+    summary_df = pd.DataFrame(
         {
             "Model": ["LDA", "NMF"],
             "Topics": [LDA_TOPIC_COUNT, NMF_TOPIC_COUNT],
-            "Primary Metric": [
-                "Coherence",
-                "Reconstruction Error",
-            ],
-            "Score": [
-                LDA_COHERENCE,
-                NMF_RECONSTRUCTION_ERROR,
-            ],
-            "Category Alignment": [
-                LDA_ALIGNMENT,
-                NMF_ALIGNMENT,
-            ],
+            "Primary Metric": ["Coherence", "Reconstruction Error"],
+            "Score": [LDA_COHERENCE, NMF_RECONSTRUCTION_ERROR],
+            "Category Alignment": [LDA_ALIGNMENT, NMF_ALIGNMENT],
         }
     )
 
     st.dataframe(
-        comparison_df,
+        summary_df,
         use_container_width=True,
         hide_index=True,
         column_config={
-            "Score": st.column_config.NumberColumn(
-                format="%.4f"
-            ),
-            "Category Alignment": st.column_config.NumberColumn(
-                format="%.2f%%"
-            ),
+            "Score": st.column_config.NumberColumn(format="%.4f"),
+            "Category Alignment": st.column_config.NumberColumn(format="%.2f%%"),
         },
     )
 
@@ -851,53 +769,33 @@ if page == "Overview":
 
 elif page == "LDA Topics":
 
-    st.markdown(
-        '<div class="section-label">Topic Explorer</div>',
-        unsafe_allow_html=True,
+    section_header(
+        "Topic Explorer",
+        "LDA Topics",
+        "Six broad semantic themes discovered by the refined LDA model.",
     )
 
-    st.markdown(
-        '<div class="section-title">LDA Topics</div>',
-        unsafe_allow_html=True,
+    topic_cards(LDA_TOPIC_WORDS)
+
+    divider()
+
+    section_header(
+        "Word weights",
+        "Inside a topic",
+        "Top words and their weights, taken directly from the trained model.",
     )
 
-    st.markdown(
-        """
-        <div class="section-description">
-        Six broad semantic themes discovered by the refined
-        LDA model.
-        </div>
-        """,
-        unsafe_allow_html=True,
+    lda_ids = sorted(int(key) for key in lda_labels.keys())
+
+    selected = st.selectbox(
+        "Choose a topic",
+        lda_ids,
+        format_func=lambda i: f"Topic {i + 1:02d} · {lda_labels[str(i)]}",
     )
 
-    columns = st.columns(2)
-
-    for index, (topic_label, words) in enumerate(
-        LDA_TOPIC_WORDS.items(),
-        start=1,
-    ):
-
-        with columns[(index - 1) % 2]:
-
-            word_list = " · ".join(words)
-
-            st.markdown(
-                f"""
-                <div class="topic-card">
-                    <div class="topic-number">
-                        TOPIC {index:02d}
-                    </div>
-                    <div class="topic-title">
-                        {topic_label}
-                    </div>
-                    <div class="topic-words">
-                        {word_list}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+    show_chart(
+        word_weight_chart(lda_top_words(selected), "Word probability")
+    )
 
 
 # ============================================================
@@ -906,53 +804,33 @@ elif page == "LDA Topics":
 
 elif page == "NMF Topics":
 
-    st.markdown(
-        '<div class="section-label">Topic Explorer</div>',
-        unsafe_allow_html=True,
+    section_header(
+        "Topic Explorer",
+        "NMF Topics",
+        "Ten fine-grained themes discovered from the TF-IDF representation using NMF.",
     )
 
-    st.markdown(
-        '<div class="section-title">NMF Topics</div>',
-        unsafe_allow_html=True,
+    topic_cards(NMF_TOPIC_WORDS)
+
+    divider()
+
+    section_header(
+        "Word weights",
+        "Inside a topic",
+        "Top terms and their component weights, taken directly from the trained model.",
     )
 
-    st.markdown(
-        """
-        <div class="section-description">
-        Ten fine-grained themes discovered from the TF-IDF
-        representation using NMF.
-        </div>
-        """,
-        unsafe_allow_html=True,
+    nmf_ids = sorted(int(key) for key in nmf_labels.keys())
+
+    selected = st.selectbox(
+        "Choose a topic",
+        nmf_ids,
+        format_func=lambda i: f"Topic {i + 1:02d} · {nmf_labels[str(i)]}",
     )
 
-    columns = st.columns(2)
-
-    for index, (topic_label, words) in enumerate(
-        NMF_TOPIC_WORDS.items(),
-        start=1,
-    ):
-
-        with columns[(index - 1) % 2]:
-
-            word_list = " · ".join(words)
-
-            st.markdown(
-                f"""
-                <div class="topic-card">
-                    <div class="topic-number">
-                        TOPIC {index:02d}
-                    </div>
-                    <div class="topic-title">
-                        {topic_label}
-                    </div>
-                    <div class="topic-words">
-                        {word_list}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+    show_chart(
+        word_weight_chart(nmf_top_words(selected), "Component weight")
+    )
 
 
 # ============================================================
@@ -961,33 +839,16 @@ elif page == "NMF Topics":
 
 elif page == "Model Comparison":
 
-    st.markdown(
-        '<div class="section-label">Evaluation</div>',
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
-        '<div class="section-title">LDA vs NMF</div>',
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
-        """
-        <div class="section-description">
-        Comparing topic granularity and alignment with the
-        original BBC news categories.
-        </div>
-        """,
-        unsafe_allow_html=True,
+    section_header(
+        "Evaluation",
+        "LDA vs NMF",
+        "Comparing topic granularity and alignment with the original BBC news categories.",
     )
 
     comparison_df = pd.DataFrame(
         {
             "Model": ["LDA", "NMF"],
-            "Category Alignment": [
-                LDA_ALIGNMENT,
-                NMF_ALIGNMENT,
-            ],
+            "Category Alignment": [LDA_ALIGNMENT, NMF_ALIGNMENT],
         }
     )
 
@@ -996,11 +857,14 @@ elif page == "Model Comparison":
         x="Model",
         y="Category Alignment",
         text="Category Alignment",
+        color="Model",
+        color_discrete_map={"LDA": ACCENT, "NMF": ACCENT_LIGHT},
     )
 
     fig.update_traces(
         texttemplate="%{text:.2f}%",
         textposition="outside",
+        marker_line_width=0,
     )
 
     fig.update_layout(
@@ -1008,62 +872,39 @@ elif page == "Model Comparison":
         yaxis_title="Category Alignment (%)",
         yaxis_range=[0, 100],
         showlegend=False,
+        bargap=0.55,
     )
 
-    fig = chart_layout(fig, height=420)
-
-    st.plotly_chart(
-        fig,
-        use_container_width=True,
-        config={
-            "displayModeBar": False,
-        },
-    )
+    show_chart(chart_layout(fig, height=420))
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.metric(
-            "LDA Coherence",
-            f"{LDA_COHERENCE:.4f}",
-        )
-
-        st.markdown(
+        st.metric("LDA Coherence", f"{LDA_COHERENCE:.4f}")
+        html(
             """
             <div class="muted">
             LDA provides a compact topic structure with strong
             semantic coherence and broad category coverage.
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
     with col2:
-        st.metric(
-            "NMF Reconstruction Error",
-            f"{NMF_RECONSTRUCTION_ERROR:.4f}",
-        )
-
-        st.markdown(
+        st.metric("NMF Reconstruction Error", f"{NMF_RECONSTRUCTION_ERROR:.4f}")
+        html(
             """
             <div class="muted">
             NMF provides a more granular representation, separating
             closely related areas such as football, rugby, tennis,
             film and music.
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
-    st.markdown(
-        '<div class="soft-divider"></div>',
-        unsafe_allow_html=True,
-    )
+    divider()
 
-    st.markdown(
-        '<div class="section-label">Interpretation</div>',
-        unsafe_allow_html=True,
-    )
+    html('<div class="section-label">Interpretation</div>')
 
     st.markdown(
         """
@@ -1082,33 +923,32 @@ elif page == "Model Comparison":
 
 elif page == "Analyze Article":
 
-    st.markdown(
-        '<div class="section-label">Interactive NLP</div>',
-        unsafe_allow_html=True,
+    section_header(
+        "Interactive NLP",
+        "Analyze an article",
+        "Paste an English news article, or try one of the examples below, "
+        "and compare the dominant topic predicted by both models.",
     )
 
-    st.markdown(
-        '<div class="section-title">Analyze an article</div>',
-        unsafe_allow_html=True,
-    )
+    st.caption("Quick examples")
 
-    st.markdown(
-        """
-        <div class="section-description">
-        Paste an English news article and compare its dominant
-        topic predictions from both trained models.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    example_columns = st.columns(len(EXAMPLE_ARTICLES))
+
+    for column, (name, text) in zip(example_columns, EXAMPLE_ARTICLES.items()):
+        with column:
+            st.button(
+                name,
+                key=f"example_{name}",
+                use_container_width=True,
+                on_click=set_example,
+                args=(text,),
+            )
 
     article = st.text_area(
         "Article text",
-        height=250,
-        placeholder=(
-            "Paste an English news article here..."
-        ),
-        label_visibility="visible",
+        key="article_text",
+        height=240,
+        placeholder="Paste an English news article here...",
     )
 
     analyze = st.button(
@@ -1121,9 +961,7 @@ elif page == "Analyze Article":
 
         if not article.strip():
 
-            st.warning(
-                "Please enter an article before running the analysis."
-            )
+            st.warning("Please enter an article before running the analysis.")
 
         else:
 
@@ -1141,68 +979,40 @@ elif page == "Analyze Article":
                 lda_result = predict_lda(cleaned)
                 nmf_result = predict_nmf(cleaned)
 
-                st.markdown(
-                    '<div class="soft-divider"></div>',
-                    unsafe_allow_html=True,
-                )
+                divider()
 
-                st.markdown(
-                    '<div class="section-label">Results</div>',
-                    unsafe_allow_html=True,
-                )
-
-                st.markdown(
-                    '<div class="section-title">Topic predictions</div>',
-                    unsafe_allow_html=True,
-                )
+                section_header("Results", "Topic predictions")
 
                 col1, col2 = st.columns(2)
 
                 with col1:
-
-                    st.markdown(
-                        "#### LDA"
-                    )
-
-                    st.metric(
-                        "Dominant Topic",
-                        lda_result["label"],
-                    )
-
-                    st.metric(
-                        "Topic Probability",
-                        f"{lda_result['probability']:.2%}",
+                    html(
+                        f"""
+                        <div class="result-card">
+                            <div class="result-model">LDA · Probabilistic</div>
+                            <div class="result-badge">{lda_result["label"]}</div>
+                            <div class="result-metric-label">Topic probability</div>
+                            <div class="result-metric-value">{lda_result["probability"]:.2%}</div>
+                        </div>
+                        """
                     )
 
                 with col2:
-
-                    st.markdown(
-                        "#### NMF"
+                    html(
+                        f"""
+                        <div class="result-card">
+                            <div class="result-model">NMF · Matrix Factorization</div>
+                            <div class="result-badge">{nmf_result["label"]}</div>
+                            <div class="result-metric-label">Topic weight</div>
+                            <div class="result-metric-value">{nmf_result["weight"]:.4f}</div>
+                        </div>
+                        """
                     )
 
-                    st.metric(
-                        "Dominant Topic",
-                        nmf_result["label"],
-                    )
+                divider()
 
-                    st.metric(
-                        "Topic Weight",
-                        f"{nmf_result['weight']:.4f}",
-                    )
-
-                st.markdown(
-                    '<div class="soft-divider"></div>',
-                    unsafe_allow_html=True,
-                )
-
-                # ------------------------------------------------
-                # LDA Distribution
-                # ------------------------------------------------
-
-                st.markdown(
-                    '<div class="section-title">LDA topic distribution</div>',
-                    unsafe_allow_html=True,
-                )
+                # LDA distribution
+                html('<div class="section-title">LDA topic distribution</div>')
 
                 lda_distribution = pd.DataFrame(
                     [
@@ -1210,13 +1020,9 @@ elif page == "Analyze Article":
                             "Topic": lda_labels[str(topic_id)],
                             "Probability": probability,
                         }
-                        for topic_id, probability
-                        in lda_result["distribution"]
+                        for topic_id, probability in lda_result["distribution"]
                     ]
-                ).sort_values(
-                    "Probability",
-                    ascending=True,
-                )
+                ).sort_values("Probability", ascending=True)
 
                 fig = px.bar(
                     lda_distribution,
@@ -1224,49 +1030,38 @@ elif page == "Analyze Article":
                     y="Topic",
                     orientation="h",
                     text="Probability",
+                    color_discrete_sequence=[ACCENT],
                 )
 
                 fig.update_traces(
                     texttemplate="%{text:.1%}",
                     textposition="outside",
+                    marker_line_width=0,
+                    opacity=0.9,
                 )
 
                 fig.update_layout(
                     xaxis_title="Probability",
                     yaxis_title="",
                     xaxis_tickformat=".0%",
+                    showlegend=False,
                 )
 
-                fig = chart_layout(fig, height=420)
+                show_chart(chart_layout(fig, height=420))
 
-                st.plotly_chart(
-                    fig,
-                    use_container_width=True,
-                    config={
-                        "displayModeBar": False,
-                    },
-                )
+                # NMF distribution
+                html('<div class="section-title">NMF topic weights</div>')
 
-                # ------------------------------------------------
-                # NMF Distribution
-                # ------------------------------------------------
-
-                st.markdown(
-                    '<div class="section-title">NMF topic weights</div>',
-                    unsafe_allow_html=True,
-                )
-
-                nmf_topic_names = list(nmf_labels.values())
+                nmf_topic_names = [
+                    nmf_labels[str(i)] for i in range(len(nmf_result["weights"]))
+                ]
 
                 nmf_distribution = pd.DataFrame(
                     {
-                        "Topic": nmf_topic_names[:len(nmf_result["weights"])],
+                        "Topic": nmf_topic_names,
                         "Weight": nmf_result["weights"],
                     }
-                ).sort_values(
-                    "Weight",
-                    ascending=True,
-                )
+                ).sort_values("Weight", ascending=True)
 
                 fig = px.bar(
                     nmf_distribution,
@@ -1274,50 +1069,35 @@ elif page == "Analyze Article":
                     y="Topic",
                     orientation="h",
                     text="Weight",
+                    color_discrete_sequence=[ACCENT_LIGHT],
                 )
 
                 fig.update_traces(
                     texttemplate="%{text:.4f}",
                     textposition="outside",
+                    marker_line_width=0,
                 )
 
                 fig.update_layout(
                     xaxis_title="Topic Weight",
                     yaxis_title="",
+                    showlegend=False,
                 )
 
-                fig = chart_layout(fig, height=520)
+                show_chart(chart_layout(fig, height=520))
 
-                st.plotly_chart(
-                    fig,
-                    use_container_width=True,
-                    config={
-                        "displayModeBar": False,
-                    },
-                )
-
-                # ------------------------------------------------
-                # Processed Text
-                # ------------------------------------------------
-
-                with st.expander(
-                    "View processed text"
-                ):
-                    st.code(
-                        cleaned,
-                        language="text",
-                    )
+                with st.expander("View processed text"):
+                    st.code(cleaned, language="text")
 
 
 # ============================================================
 # Footer
 # ============================================================
 
-st.markdown(
+html(
     """
     <div class="footer">
         NewsTopic AI · NLP Topic Modeling · LDA + NMF
     </div>
-    """,
-    unsafe_allow_html=True,
+    """
 )
